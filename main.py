@@ -1,47 +1,57 @@
-# python3
+# Vasīlijs Dvils-Dmirijevs 221RDB381
 
-class Query:
-    def __init__(self, query):
-        self.type = query[0]
-        self.number = int(query[1])
-        if self.type == 'add':
-            self.name = query[2]
+import random
 
-def read_queries():
-    n = int(input())
-    return [Query(input().split()) for i in range(n)]
+class PhoneBook:
+    def __init__(self, record_count=1000):
+        self.prime = random.randint(0, 10000019)
+        self.multiplier = random.randint(0, 263)
+        self.record_count = record_count
+        self.records = [[] for _ in range(record_count)]
 
-def write_responses(result):
-    print('\n'.join(result))
+    def hash_function(self, text):
+        hash_value = 0
+        for i in reversed(text):
+            hash_value = (hash_value * self.multiplier + ord(i)) % self.prime
+        return hash_value % self.record_count
 
-def process_queries(queries):
-    result = []
-    # Keep list of all existing (i.e. not deleted yet) contacts.
-    contacts = []
-    for cur_query in queries:
-        if cur_query.type == 'add':
-            # if we already have contact with such number,
-            # we should rewrite contact's name
-            for contact in contacts:
-                if contact.number == cur_query.number:
-                    contact.name = cur_query.name
-                    break
-            else: # otherwise, just add it
-                contacts.append(cur_query)
-        elif cur_query.type == 'del':
-            for j in range(len(contacts)):
-                if contacts[j].number == cur_query.number:
-                    contacts.pop(j)
-                    break
-        else:
-            response = 'not found'
-            for contact in contacts:
-                if contact.number == cur_query.number:
-                    response = contact.name
-                    break
-            result.append(response)
-    return result
+    def add_record(self, number, name):
+        hashed_num = self.hash_function(str(number))
+        record = self.records[hashed_num]
+        for i in range(len(record)):
+            if record[i][0] == number:
+                record[i] = (number, name)
+                return
+        record.append((number, name))
+
+    def delete_record(self, number):
+        hashed_num = self.hash_function(str(number))
+        record = self.records[hashed_num]
+        for i in range(len(record)):
+            if record[i][0] == number:
+                del record[i]
+                return
+
+    def find_name(self, number):
+        hashed_num = self.hash_function(str(number))
+        record = self.records[hashed_num]
+        for i in range(len(record)):
+            if record[i][0] == number:
+                return record[i][1]
+        return "not found"
+
 
 if __name__ == '__main__':
-    write_responses(process_queries(read_queries()))
-
+    phone_book = PhoneBook()
+    n = int(input())
+    answer = []
+    for i in range(n):
+        query = input().split()
+        if query[0] == "add":
+            phone_book.add_record(int(query[1]), query[2])
+        elif query[0] == "del":
+            phone_book.delete_record(int(query[1]))
+        elif query[0] == "find":
+            answer.append(phone_book.find_name(int(query[1])))
+    for name in answer:
+        print(name)
